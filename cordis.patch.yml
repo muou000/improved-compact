@@ -1,0 +1,5 @@
+- insert:
+    - id: dsh-compact
+      name: dsh-compact
+      config:
+        logLifecycle: false
