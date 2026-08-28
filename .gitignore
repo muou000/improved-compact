@@ -1,6 +1,7 @@
 node_modules/
 lib/
 coverage/
+evals/.local/
 .env
 *.log
 .DS_Store

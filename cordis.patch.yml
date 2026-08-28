@@ -1,5 +1,32 @@
+# Disable the base provider by guarded identity, then insert the candidate as
+# the sole ctx.compaction provider. Row order does not control activation.
+- id: compaction-basic
+  name: '@deepseek-ai/dsh-compaction-basic'
+  disabled: true
+
 - insert:
-    - id: dsh-compact
-      name: dsh-compact
+    - id: improved-compact
+      name: improved-compact
       config:
+        softPruneRatio: 0.6
+        thresholdRatio: 0.8
+        retainRatio: 0.16
+        protectedRecentUserMessages: 1
+        maxProtectedTailRatio: 0.5
+        validateSummaryStructure: true
+        repeatSummaryMaxChars: 1800
+        toolResult:
+          thresholdChars: 8192
+          headChars: 3072
+          tailChars: 1024
+          signalChars: 2048
+        verbatimAnchors:
+          maxChars: 4096
+          maxAnchors: 64
         logLifecycle: false
+
+# improved-compact owns the replay-safe prune tier; a second provider would perform
+# a uniform head/tail rewrite before semantic recovery can inspect the middle.
+- id: tool-result-pruner
+  name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+  disabled: true

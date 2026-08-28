@@ -1,24 +1,41 @@
-/**
- * Configurable lifecycle scaffold for the dsh-compact plugin.
- * @module dsh-compact
- */
-
+/** Adaptive, replay-safe context compaction provider for DeepSeek Harness. */
 import type { Context } from '@deepseek-ai/cordis'
-import Schema from '@deepseek-ai/schemastery'
+import { AdaptiveCompactionEngine } from './engine.ts'
+import type { AdaptiveCompactionConfig } from './types.ts'
+
+export { AdaptiveCompactionEngine } from './engine.ts'
+export { resolveAdaptiveConfig } from './config.ts'
+export {
+  boundStructuredSummary,
+  extractVerbatimAnchors,
+  REQUIRED_SUMMARY_SECTIONS,
+  validateAndAugmentSummary,
+} from './signals.ts'
+export {
+  measureToolResultContent,
+  pruneToolResultContent,
+  SemanticToolResultPruner,
+} from './pruner.ts'
+export type {
+  AdaptiveCompactionConfig,
+  ResolvedAdaptiveConfig,
+  ResolvedSemanticToolResultConfig,
+  ResolvedVerbatimAnchorConfig,
+  SemanticToolResultConfig,
+  VerbatimAnchorConfig,
+} from './types.ts'
 
 /** Stable Cordis plugin name. */
-export const name = 'dsh-compact'
+export const name = 'improved-compact'
 
 /** User-configurable plugin options. */
-export interface Config {
-  /** Emit diagnostic messages when the plugin loads and unloads. */
-  logLifecycle?: boolean
-}
+export type Config = AdaptiveCompactionConfig
 
-/** Runtime validation and defaults for {@link Config}. */
-export const Config: Schema<Config> = Schema.object({
-  logLifecycle: Schema.boolean().default(false),
-})
+/** Runtime schema composed from the native backend and adaptive fields. */
+export const Config = AdaptiveCompactionEngine.Config
+
+/** Required upstream services; Cordis defers loading until they are present. */
+export const inject = AdaptiveCompactionEngine.inject
 
 /**
  * Mount the plugin into a Cordis context.
@@ -27,10 +44,11 @@ export const Config: Schema<Config> = Schema.object({
  * @param config - Validated plugin configuration.
  */
 export function apply(ctx: Context, config: Config): void {
-  if (!config.logLifecycle) return
+  const engine = new AdaptiveCompactionEngine(ctx, config)
+  if (!engine.adaptiveConfig.logLifecycle) return
 
   ctx.effect(() => {
-    console.info('[dsh-compact] loaded')
-    return () => console.info('[dsh-compact] unloaded')
+    console.info('[improved-compact] loaded')
+    return () => console.info('[improved-compact] unloaded')
   })
 }

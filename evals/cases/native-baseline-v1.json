@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "dsh-native-compaction-baseline-v1",
+  "description": "Synthetic, keyless fixtures for the built-in DSH compaction-basic policy and default tool-result pruner.",
+  "cases": [
+    {
+      "id": "continuity-core",
+      "description": "Preserve the active goal, user constraint, exact file, diagnostic error, decision, and pending command.",
+      "contextWindow": 1200,
+      "waves": [
+        [
+          {
+            "userLines": [
+              "Goal: eliminate_the_cache_race_without_changing_the_public_API"
+            ],
+            "assistantLines": [
+              "Fact: target_file=/workspace/src/cache.ts"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: do_not_modify=/workspace/src/api.ts"
+            ],
+            "assistantLines": [
+              "Decision: lock_strategy=AsyncMutex"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Fact: reproduction_command=pnpm_test_cache_race"
+            ],
+            "assistantLines": [
+              "Error: observed_failure=expected_2_received_1"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Fact: stable_test_seed=731"
+            ],
+            "assistantLines": [
+              "Pending: next_command=pnpm_test_cache"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: preserve_node_support=node22"
+            ],
+            "assistantLines": [
+              "Fact: review_scope=dsh-compact_only"
+            ],
+            "fillerRepeat": 24
+          }
+        ]
+      ],
+      "anchors": [
+        { "id": "goal", "category": "goal", "needle": "Goal: eliminate_the_cache_race_without_changing_the_public_API" },
+        { "id": "target-file", "category": "fact", "needle": "Fact: target_file=/workspace/src/cache.ts" },
+        { "id": "scope-constraint", "category": "constraint", "needle": "Constraint: do_not_modify=/workspace/src/api.ts" },
+        { "id": "decision", "category": "decision", "needle": "Decision: lock_strategy=AsyncMutex" },
+        { "id": "error", "category": "error", "needle": "Error: observed_failure=expected_2_received_1" },
+        { "id": "pending", "category": "pending", "needle": "Pending: next_command=pnpm_test_cache" }
+      ],
+      "checks": [
+        { "id": "target-file-query", "kind": "lastAssignment", "key": "target_file", "expected": "/workspace/src/cache.ts" },
+        { "id": "next-action-query", "kind": "lastAssignment", "key": "next_command", "expected": "pnpm_test_cache" },
+        { "id": "constraint-query", "kind": "lastAssignment", "key": "do_not_modify", "expected": "/workspace/src/api.ts" }
+      ]
+    },
+    {
+      "id": "correction-wins",
+      "description": "Keep source order strongly enough that a later correction overrides a stale earlier value.",
+      "contextWindow": 1200,
+      "waves": [
+        [
+          {
+            "userLines": [
+              "Goal: prepare_the_regional_deployment"
+            ],
+            "assistantLines": [
+              "Fact: deploy_region=eu-west-1"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: rollback_required=true"
+            ],
+            "assistantLines": [
+              "Fact: rollout_percent=10"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Correction: deploy_region=ap-southeast-1"
+            ],
+            "assistantLines": [
+              "Decision: rollout_mode=canary"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Pending: verify_region=ap-southeast-1"
+            ],
+            "assistantLines": [
+              "Fact: approval_ticket=OPS-731"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: max_error_rate=0.01"
+            ],
+            "assistantLines": [
+              "Fact: dashboard=regional-canary"
+            ],
+            "fillerRepeat": 24
+          }
+        ]
+      ],
+      "anchors": [
+        { "id": "goal", "category": "goal", "needle": "Goal: prepare_the_regional_deployment" },
+        { "id": "stale-region", "category": "fact", "needle": "Fact: deploy_region=eu-west-1" },
+        { "id": "corrected-region", "category": "correction", "needle": "Correction: deploy_region=ap-southeast-1" },
+        { "id": "rollback", "category": "constraint", "needle": "Constraint: rollback_required=true" },
+        { "id": "pending", "category": "pending", "needle": "Pending: verify_region=ap-southeast-1" }
+      ],
+      "checks": [
+        { "id": "latest-region-query", "kind": "lastAssignment", "key": "deploy_region", "expected": "ap-southeast-1" },
+        { "id": "rollback-query", "kind": "lastAssignment", "key": "rollback_required", "expected": "true" }
+      ]
+    },
+    {
+      "id": "tool-prune-middle-loss",
+      "description": "Exercise the shipped 8192/4096/1024 tool-result pruner and retain a newest structured tool pair.",
+      "contextWindow": 2400,
+      "waves": [
+        [
+          {
+            "userLines": [
+              "Goal: inspect_the_generated_artifact"
+            ],
+            "assistantLines": [
+              "Constraint: preserve_the_latest_tool_pair=true"
+            ],
+            "fillerRepeat": 28
+          },
+          {
+            "userLines": [
+              "Fact: artifact_path=/workspace/out/report.json"
+            ],
+            "assistantLines": [
+              "Decision: inspection_mode=read_only"
+            ],
+            "fillerRepeat": 28
+          },
+          {
+            "userLines": [
+              "Fact: expected_schema=report-v3"
+            ],
+            "assistantLines": [
+              "Pending: compare_the_artifact_hash=true"
+            ],
+            "fillerRepeat": 28
+          },
+          {
+            "userLines": [
+              "Fact: baseline_hash=sha256-old"
+            ],
+            "assistantLines": [
+              "Error: previous_read=truncated"
+            ],
+            "fillerRepeat": 28
+          },
+          {
+            "userLines": [
+              "Pending: read_the_complete_artifact=true"
+            ],
+            "assistantLines": [
+              "Fact: tool_request=artifact_read"
+            ],
+            "fillerRepeat": 8,
+            "tool": {
+              "name": "read_artifact",
+              "callId": "artifact-read-731",
+              "arguments": "{\"path\":\"/workspace/out/report.json\"}",
+              "resultParts": [
+                { "text": "Fact: tool_head_status=started\n" },
+                { "repeat": "H", "count": 4500 },
+                { "text": "\nFact: hidden_nonce=blue-lantern-731\n" },
+                { "repeat": "M", "count": 4500 },
+                { "text": "\nFact: tool_tail_status=complete\n" }
+              ]
+            }
+          }
+        ]
+      ],
+      "anchors": [
+        { "id": "goal", "category": "goal", "needle": "Goal: inspect_the_generated_artifact" },
+        { "id": "tool-head", "category": "tool-result", "needle": "Fact: tool_head_status=started" },
+        { "id": "tool-middle", "category": "tool-result", "needle": "Fact: hidden_nonce=blue-lantern-731" },
+        { "id": "tool-tail", "category": "tool-result", "needle": "Fact: tool_tail_status=complete" },
+        { "id": "pair-constraint", "category": "constraint", "needle": "Constraint: preserve_the_latest_tool_pair=true" }
+      ],
+      "checks": [
+        { "id": "middle-fact-query", "kind": "lastAssignment", "key": "hidden_nonce", "expected": "blue-lantern-731" },
+        { "id": "latest-pair-query", "kind": "structuredToolPair", "callId": "artifact-read-731" }
+      ]
+    },
+    {
+      "id": "repeat-compaction-drift",
+      "description": "Append a second wave after the first checkpoint and measure information loss across two pressure compactions.",
+      "contextWindow": 1200,
+      "waves": [
+        [
+          {
+            "userLines": [
+              "Goal: migrate_the_session_store"
+            ],
+            "assistantLines": [
+              "Fact: database_driver=sqlite"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: preserve_existing_session_ids=true"
+            ],
+            "assistantLines": [
+              "Decision: migration_style=online"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Fact: migration_file=/workspace/migrations/004.sql"
+            ],
+            "assistantLines": [
+              "Error: dry_run_failure=duplicate_key"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Pending: add_idempotent_guard=true"
+            ],
+            "assistantLines": [
+              "Fact: rollback_file=/workspace/migrations/004.down.sql"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: max_downtime_seconds=30"
+            ],
+            "assistantLines": [
+              "Fact: migration_batch_size=500"
+            ],
+            "fillerRepeat": 24
+          }
+        ],
+        [
+          {
+            "userLines": [
+              "Correction: database_driver=postgres"
+            ],
+            "assistantLines": [
+              "Decision: use_advisory_lock=true"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Fact: postgres_schema=agent_runtime"
+            ],
+            "assistantLines": [
+              "Pending: next_command=pnpm_test_migrations"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Constraint: transaction_isolation=serializable"
+            ],
+            "assistantLines": [
+              "Fact: lock_timeout_seconds=5"
+            ],
+            "fillerRepeat": 24
+          },
+          {
+            "userLines": [
+              "Fact: validation_seed=991"
+            ],
+            "assistantLines": [
+              "Pending: verify_rollback=true"
+            ],
+            "fillerRepeat": 24
+          }
+        ]
+      ],
+      "anchors": [
+        { "id": "goal", "category": "goal", "needle": "Goal: migrate_the_session_store" },
+        { "id": "session-id-constraint", "category": "constraint", "needle": "Constraint: preserve_existing_session_ids=true" },
+        { "id": "migration-file", "category": "fact", "needle": "Fact: migration_file=/workspace/migrations/004.sql" },
+        { "id": "initial-driver", "category": "fact", "needle": "Fact: database_driver=sqlite" },
+        { "id": "corrected-driver", "category": "correction", "needle": "Correction: database_driver=postgres" },
+        { "id": "next-command", "category": "pending", "needle": "Pending: next_command=pnpm_test_migrations" }
+      ],
+      "checks": [
+        { "id": "latest-driver-query", "kind": "lastAssignment", "key": "database_driver", "expected": "postgres" },
+        { "id": "migration-file-query", "kind": "lastAssignment", "key": "migration_file", "expected": "/workspace/migrations/004.sql" },
+        { "id": "next-command-query", "kind": "lastAssignment", "key": "next_command", "expected": "pnpm_test_migrations" }
+      ]
+    }
+  ]
+}
