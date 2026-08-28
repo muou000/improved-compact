@@ -64,11 +64,11 @@ pnpm run eval:candidate:model -- --provider openai --model gpt-5.6-luna --runs 5
 在该目录的上一级执行：
 
 ```sh
-dsh plugin --profile compact-dev add ./dsh-compact
+dsh plugin --profile compact-dev add ./improved-compact
 dsh --profile compact-dev --dump-config
 ```
 
-这里的 `./dsh-compact` 是当前源码仓库目录；安装后的插件标识是 `improved-compact`。
+源码仓库目录与安装后的插件标识均为 `improved-compact`。
 
 配置层会按原生 package name 校验并禁用基础 Provider，插入候选 row，同时关闭会抢先丢弃中段的原生均匀 pruner：
 

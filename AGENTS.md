@@ -1,6 +1,6 @@
 # AGENTS.md
 
-`improved-compact` 是独立发布的 DeepSeek Harness（DSH）仓库外 Cordis 插件；源码仓库目录仍为 `dsh-compact`。插件目标是在不修改 DSH agent loop 的前提下改进上下文压缩的保真、成本与可恢复性。
+`improved-compact` 是独立发布的 DeepSeek Harness（DSH）仓库外 Cordis 插件，目标是在不修改 DSH agent loop 的前提下改进上下文压缩的保真、成本与可恢复性。
 
 ## 开始工作
 
