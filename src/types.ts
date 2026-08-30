@@ -22,6 +22,22 @@ export interface VerbatimAnchorConfig {
   maxAnchors?: number
 }
 
+/** Request-level cost warnings and explicit hard limits. */
+export interface RequestBudgetConfig {
+  /** Warn when estimated input reaches this absolute token count; `0` disables it. */
+  warnAtTokens?: number
+  /** Block when estimated input reaches this absolute token count; `0` disables it. */
+  blockAtTokens?: number
+  /** Warn when estimated input plus output reserve reaches this context ratio; `0` disables it. */
+  warnAtRatio?: number
+  /** Block when estimated input plus output reserve reaches this context ratio; `0` disables it. */
+  blockAtRatio?: number
+  /** Cap an explicit or adapter-default output budget; `0` preserves the routed default. */
+  maxOutputTokens?: number
+  /** Emit every over-budget warning instead of one warning until pressure recovers. */
+  logEveryRequest?: boolean
+}
+
 /** Adaptive policy layered over DSH's replay-safe basic compaction backend. */
 export interface AdaptiveCompactionConfig extends BasicCompactionConfig {
   /** Run the model-free pruning tier at this fraction of the context window. */
@@ -38,6 +54,8 @@ export interface AdaptiveCompactionConfig extends BasicCompactionConfig {
   toolResult?: SemanticToolResultConfig
   /** Deterministic exact-value appendix policy. */
   verbatimAnchors?: VerbatimAnchorConfig
+  /** Non-content-mutating request telemetry and opt-in hard budgets. */
+  requestBudget?: RequestBudgetConfig
   /** Emit concise load and unload diagnostics. */
   logLifecycle?: boolean
 }
@@ -57,6 +75,16 @@ export interface ResolvedVerbatimAnchorConfig {
   readonly maxAnchors: number
 }
 
+/** Validated immutable request budget policy. */
+export interface ResolvedRequestBudgetConfig {
+  readonly warnAtTokens: number
+  readonly blockAtTokens: number
+  readonly warnAtRatio: number
+  readonly blockAtRatio: number
+  readonly maxOutputTokens: number
+  readonly logEveryRequest: boolean
+}
+
 /** Validated adaptive-only policy fields; base fields are validated upstream. */
 export interface ResolvedAdaptiveConfig {
   readonly softPruneRatio: number
@@ -66,5 +94,6 @@ export interface ResolvedAdaptiveConfig {
   readonly repeatSummaryMaxChars: number
   readonly toolResult: ResolvedSemanticToolResultConfig
   readonly verbatimAnchors: ResolvedVerbatimAnchorConfig
+  readonly requestBudget: ResolvedRequestBudgetConfig
   readonly logLifecycle: boolean
 }

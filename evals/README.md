@@ -27,6 +27,14 @@ pnpm run eval:baseline:native -- --dsh-root D:\deepseek-harness --runs 5
 pnpm run eval:candidate:native -- --dsh-root D:\deepseek-harness --runs 5
 ```
 
+验证安装补丁使用的 8KB spill 与基础 50KB 策略差异：
+
+```powershell
+pnpm run eval:spill -- --dsh-root D:\deepseek-harness
+```
+
+该 smoke 通过当前 DSH 的真实 tools/spill 服务执行一个确定性 40KB 结果，校验完整副本、模型可见字节上限、定位符与原文 SHA-256。它不把字节差直接换算成 provider token 或账单。
+
 `--strategy native|candidate` 是同一运行器的显式开关；默认仍是 `native`，因此已有基线评分语义不变。为避免新运行覆盖旧文件，默认输出名现在带策略：`native-keyless.json`、`candidate-keyless.json`、`native-configured-model.json` 或 `candidate-configured-model.json`。候选运行前必须先 `pnpm run build`，报告会额外记录 `lib/index.js` 的 SHA-256。
 
 使用 DSH `settings.yaml` 和 credentials service 中已经配置的真实模型：
@@ -43,6 +51,7 @@ pnpm run eval:candidate:model -- --provider openai --model gpt-5.6-luna --runs 5
 - [`reports/BASELINE-2026-08-27-dsh-native-v1.md`](reports/BASELINE-2026-08-27-dsh-native-v1.md)：确定性 keyless 机械基线；
 - [`reports/BASELINE-2026-08-27-gpt-5.6-luna-v1.md`](reports/BASELINE-2026-08-27-gpt-5.6-luna-v1.md)：DSH 已配置真实模型的 5 次重复基线；
 - [`reports/EXPERIMENT-2026-08-27-improved-compact-v1.md`](reports/EXPERIMENT-2026-08-27-improved-compact-v1.md)：同数据集、同模型、各 5 次的基线/候选对照。
+- [`reports/EXPERIMENT-2026-08-30-current-dsh-context-cost-v2.md`](reports/EXPERIMENT-2026-08-30-current-dsh-context-cost-v2.md)：当前 DSH API 复跑、8KB spill 与请求预算证据。
 
 ## 证据边界
 

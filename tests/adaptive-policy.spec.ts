@@ -139,4 +139,13 @@ describe('adaptive compaction policy', () => {
     expect(() => resolveAdaptiveConfig({ verbatimAnchors: { maxChars: 32 } }))
       .toThrow(/verbatimAnchors\.maxChars.*at least 64/i)
   })
+
+  it('rejects request budget hard limits below their warning limits', () => {
+    expect(() => resolveAdaptiveConfig({
+      requestBudget: { warnAtTokens: 1_000, blockAtTokens: 900 },
+    })).toThrow(/blockAtTokens.*at least warnAtTokens/i)
+    expect(() => resolveAdaptiveConfig({
+      requestBudget: { warnAtRatio: 0.8, blockAtRatio: 0.7 },
+    })).toThrow(/blockAtRatio.*at least warnAtRatio/i)
+  })
 })

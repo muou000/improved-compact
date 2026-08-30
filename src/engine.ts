@@ -8,6 +8,7 @@ import type { Message, ToolSchema } from '@deepseek-ai/dsh-llm'
 import type { Session } from '@deepseek-ai/dsh-session'
 import { baseCompactionConfig, resolveAdaptiveConfig } from './config.ts'
 import { SemanticToolResultPruner } from './pruner.ts'
+import { RequestBudgetPolicy } from './budget.ts'
 import { boundStructuredSummary, textFromBlocks, validateAndAugmentSummary } from './signals.ts'
 import type { AdaptiveCompactionConfig, ResolvedAdaptiveConfig } from './types.ts'
 
@@ -27,6 +28,14 @@ const customConfig = z.object({
   verbatimAnchors: z.object({
     maxChars: z.number().step(1).min(0),
     maxAnchors: z.number().step(1).min(0),
+  }),
+  requestBudget: z.object({
+    warnAtTokens: z.number().step(1).min(0),
+    blockAtTokens: z.number().step(1).min(0),
+    warnAtRatio: z.number(),
+    blockAtRatio: z.number(),
+    maxOutputTokens: z.number().step(1).min(0),
+    logEveryRequest: z.boolean(),
   }),
   logLifecycle: z.boolean(),
 })
@@ -50,6 +59,9 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
   /** Deterministic replay-safe tool-result pruning policy. */
   readonly semanticPruner: SemanticToolResultPruner
 
+  /** Request-cost diagnostics and explicit deployment budget gates. */
+  readonly requestBudget: RequestBudgetPolicy
+
   private readonly protectedTailBudgets = new WeakMap<Session, number>()
 
   constructor(ctx: Context, config: AdaptiveCompactionConfig = {}) {
@@ -57,6 +69,7 @@ export class AdaptiveCompactionEngine extends BasicCompactionEngine {
     super(ctx, baseCompactionConfig(config))
     this.adaptiveConfig = adaptiveConfig
     this.semanticPruner = new SemanticToolResultPruner(ctx, adaptiveConfig.toolResult)
+    this.requestBudget = new RequestBudgetPolicy(ctx, adaptiveConfig.requestBudget)
   }
 
   /**

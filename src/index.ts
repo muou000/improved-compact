@@ -16,11 +16,15 @@ export {
   pruneToolResultContent,
   SemanticToolResultPruner,
 } from './pruner.ts'
+export { evaluateRequestBudget, RequestBudgetPolicy } from './budget.ts'
+export type { RequestBudgetLevel, RequestBudgetObservation } from './budget.ts'
 export type {
   AdaptiveCompactionConfig,
   ResolvedAdaptiveConfig,
   ResolvedSemanticToolResultConfig,
+  ResolvedRequestBudgetConfig,
   ResolvedVerbatimAnchorConfig,
+  RequestBudgetConfig,
   SemanticToolResultConfig,
   VerbatimAnchorConfig,
 } from './types.ts'

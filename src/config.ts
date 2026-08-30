@@ -30,6 +30,7 @@ const ADAPTIVE_KEYS: ReadonlySet<string> = new Set([
   'repeatSummaryMaxChars',
   'toolResult',
   'verbatimAnchors',
+  'requestBudget',
   'logLifecycle',
 ])
 
@@ -42,6 +43,14 @@ const TOOL_RESULT_KEYS: ReadonlySet<string> = new Set([
 ])
 
 const VERBATIM_KEYS: ReadonlySet<string> = new Set(['maxChars', 'maxAnchors'])
+const REQUEST_BUDGET_KEYS: ReadonlySet<string> = new Set([
+  'warnAtTokens',
+  'blockAtTokens',
+  'warnAtRatio',
+  'blockAtRatio',
+  'maxOutputTokens',
+  'logEveryRequest',
+])
 
 /** Split plugin-only fields from the configuration accepted by the upstream backend. */
 export function baseCompactionConfig(config: AdaptiveCompactionConfig): BasicCompactionConfig {
@@ -87,6 +96,7 @@ export function resolveAdaptiveConfig(config: AdaptiveCompactionConfig = {}): Re
   if (maxChars > 0 && maxChars < 64) {
     throw new Error('improved-compact config.verbatimAnchors.maxChars must be 0 or at least 64')
   }
+  const requestBudget = resolveRequestBudget(config.requestBudget)
 
   return Object.freeze({
     softPruneRatio,
@@ -96,7 +106,42 @@ export function resolveAdaptiveConfig(config: AdaptiveCompactionConfig = {}): Re
     repeatSummaryMaxChars,
     toolResult,
     verbatimAnchors: Object.freeze({ maxChars, maxAnchors }),
+    requestBudget,
     logLifecycle,
+  })
+}
+
+function resolveRequestBudget(
+  configured: AdaptiveCompactionConfig['requestBudget'],
+): ResolvedAdaptiveConfig['requestBudget'] {
+  const config = configured ?? {}
+  validateObject(config, 'improved-compact config.requestBudget')
+  validateKeys(config, REQUEST_BUDGET_KEYS, 'improved-compact config.requestBudget')
+  const warnAtTokens = config.warnAtTokens ?? 0
+  const blockAtTokens = config.blockAtTokens ?? 0
+  const warnAtRatio = config.warnAtRatio ?? 0.9
+  const blockAtRatio = config.blockAtRatio ?? 0
+  const maxOutputTokens = config.maxOutputTokens ?? 0
+  const logEveryRequest = config.logEveryRequest ?? false
+  assertNonNegativeInteger('improved-compact config.requestBudget.warnAtTokens', warnAtTokens)
+  assertNonNegativeInteger('improved-compact config.requestBudget.blockAtTokens', blockAtTokens)
+  assertOptionalRatio('improved-compact config.requestBudget.warnAtRatio', warnAtRatio)
+  assertOptionalRatio('improved-compact config.requestBudget.blockAtRatio', blockAtRatio)
+  assertNonNegativeInteger('improved-compact config.requestBudget.maxOutputTokens', maxOutputTokens)
+  assertBoolean('improved-compact config.requestBudget.logEveryRequest', logEveryRequest)
+  if (warnAtTokens > 0 && blockAtTokens > 0 && blockAtTokens < warnAtTokens) {
+    throw new Error('improved-compact config.requestBudget.blockAtTokens must be at least warnAtTokens')
+  }
+  if (warnAtRatio > 0 && blockAtRatio > 0 && blockAtRatio < warnAtRatio) {
+    throw new Error('improved-compact config.requestBudget.blockAtRatio must be at least warnAtRatio')
+  }
+  return Object.freeze({
+    warnAtTokens,
+    blockAtTokens,
+    warnAtRatio,
+    blockAtRatio,
+    maxOutputTokens,
+    logEveryRequest,
   })
 }
 
@@ -173,6 +218,12 @@ function assertRatio(name: string, value: unknown): asserts value is number {
 function assertNonNegativeRatio(name: string, value: unknown): asserts value is number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value >= 1) {
     throw new Error(`${name} (${String(value)}) must be a number in [0, 1)`)
+  }
+}
+
+function assertOptionalRatio(name: string, value: unknown): asserts value is number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`${name} (${String(value)}) must be a number in [0, 1]`)
   }
 }
 

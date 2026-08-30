@@ -194,6 +194,10 @@ async function importUpstream(dshRoot, strategy) {
   const candidate = strategy === 'candidate'
     ? await import(pathToFileURL(join(pluginRoot, 'lib', 'index.js')).href)
     : undefined
+  const ToolCallId = llm.ToolCallId ?? llm.CallId
+  if (typeof ToolCallId !== 'function') {
+    throw new Error('current DSH LLM package exports neither ToolCallId nor legacy CallId')
+  }
   return {
     Context: cordis.Context,
     BasicCompactionEngine: basic.BasicCompactionEngine,
@@ -206,7 +210,7 @@ async function importUpstream(dshRoot, strategy) {
     LlmPiAi: piAi,
     FileSettingsProvider: settingsFile.FileSettingsProvider,
     LocalCredentialProvider: credentialsLocal.LocalCredentialProvider,
-    CallId: llm.CallId,
+    ToolCallId,
     createMessage: llm.createMessage,
     createToolResultMessage: llm.createToolResultMessage,
     createUserMessage: llm.createUserMessage,
@@ -347,7 +351,7 @@ function appendTurn(runtime, session, state, turnSpec, target) {
   if (turnSpec.tool !== undefined) {
     content.push({
       type: 'tool-call',
-      id: runtime.CallId(turnSpec.tool.callId),
+      id: runtime.ToolCallId(turnSpec.tool.callId),
       name: turnSpec.tool.name,
       arguments: turnSpec.tool.arguments,
     })
@@ -363,7 +367,7 @@ function appendTurn(runtime, session, state, turnSpec, target) {
   }, { surfaceOp: 'append' })
 
   if (turnSpec.tool !== undefined) {
-    const callId = runtime.CallId(turnSpec.tool.callId)
+    const callId = runtime.ToolCallId(turnSpec.tool.callId)
     session.append('tool/call', {
       turn,
       step: 1,

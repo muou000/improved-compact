@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { freezeMessage } from '@deepseek-ai/dsh-llm'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { CallId, ToolResultMessage } from '@deepseek-ai/dsh-llm'
+import type { ToolResultMessage } from '@deepseek-ai/dsh-llm'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
 import type {} from '@deepseek-ai/dsh-compaction'
 import type {} from '@deepseek-ai/dsh-token-meter'
@@ -12,11 +12,13 @@ const OPEN_MARKER = '\n\n<improved-compact-pruned>\n'
 const SIGNAL_LABEL = 'Preserved high-signal lines:\n'
 const CLOSE_MARKER = '</improved-compact-pruned>\n\n'
 
+type ToolCallId = ToolResultMessage['source']['callId']
+
 /** One durable tool-result replacement produced by the semantic pruning tier. */
 export interface SemanticPrunedEntry {
   readonly originalSeq: number
   readonly replacementSeq: number
-  readonly callId: CallId
+  readonly callId: ToolCallId
   readonly toolName: string | undefined
   readonly charsBefore: number
   readonly charsAfter: number
@@ -164,8 +166,8 @@ export class SemanticToolResultPruner {
   }
 }
 
-function toolNamesByCallId(session: Session): Map<CallId, string> {
-  const names = new Map<CallId, string>()
+function toolNamesByCallId(session: Session): Map<ToolCallId, string> {
+  const names = new Map<ToolCallId, string>()
   for (const event of session.events) {
     if (event.type === 'tool/call') names.set(event.data.callId, event.data.name)
   }

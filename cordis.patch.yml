@@ -23,6 +23,13 @@
         verbatimAnchors:
           maxChars: 4096
           maxAnchors: 64
+        requestBudget:
+          warnAtTokens: 0
+          blockAtTokens: 0
+          warnAtRatio: 0.9
+          blockAtRatio: 0
+          maxOutputTokens: 0
+          logEveryRequest: false
         logLifecycle: false
 
 # improved-compact owns the replay-safe prune tier; a second provider would perform
@@ -30,3 +37,12 @@
 - id: tool-result-pruner
   name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
   disabled: true
+
+# Bound oversized tool output before it becomes repeated session history. The
+# upstream spill policy keeps the full text in the session-scoped spill store
+# and logs a replayable preview + locator, so this is reversible rather than a
+# second lossy pruning pass. A later profile patch may override this budget.
+- id: spill-policy
+  name: '@deepseek-ai/dsh-spill-policy'
+  config:
+    maxInlineBytes: 8192

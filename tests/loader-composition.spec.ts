@@ -36,6 +36,7 @@ describe('improved-compact real Loader composition', () => {
       "- id: token-meter\n  name: '@deepseek-ai/dsh-token-meter'",
       "- id: compaction-basic\n  name: '@deepseek-ai/dsh-compaction-basic'",
       "- id: tool-result-pruner\n  name: '@deepseek-ai/dsh-compaction-tool-result-pruner'",
+      "- id: spill-policy\n  name: '@deepseek-ai/dsh-spill-policy'\n  config:\n    maxInlineBytes: 50000",
       '',
     ].join('\n')
     const base = yaml.load(baseText, { schema: entryListSchema })
@@ -56,10 +57,18 @@ describe('improved-compact real Loader composition', () => {
     context.baseUrl = pathToFileURL(root).href + '/'
     await context.plugin(Loader)
     context.loader.builtins.include = Include
+    const spillConfigs: unknown[] = []
+    const spillPolicyProbe = {
+      name: 'spill-policy-probe',
+      apply(_ctx: Context, config: unknown) {
+        spillConfigs.push(config)
+      },
+    }
     const modules = new Map<string, unknown>([
       ['@deepseek-ai/dsh-llm', LlmRuntime],
       ['@deepseek-ai/dsh-session', SessionStore],
       ['@deepseek-ai/dsh-token-meter', TokenMeter],
+      ['@deepseek-ai/dsh-spill-policy', spillPolicyProbe],
       ['improved-compact', plugin],
     ])
     context.loader.internal = {
@@ -82,5 +91,8 @@ describe('improved-compact real Loader composition', () => {
     expect(entries.find(entry => entry.options.id === 'compaction-basic')?.disabled).toBe(true)
     expect(entries.find(entry => entry.options.id === 'improved-compact')?.options.name).toBe('improved-compact')
     expect(entries.find(entry => entry.options.id === 'tool-result-pruner')?.disabled).toBe(true)
+    expect(entries.find(entry => entry.options.id === 'spill-policy')?.options.config)
+      .toEqual({ maxInlineBytes: 8192 })
+    expect(spillConfigs).toEqual([{ maxInlineBytes: 8192 }])
   })
 })
