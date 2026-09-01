@@ -15,29 +15,50 @@
 
 所有模型可见替换都使用上游 `compaction/prune` 或 `compaction/summary` 事件，引用被替换的原始 event seq；插件不新增 DSH 当前持久化目录无法识别的私有 session event。卸载插件 fiber 会同步卸载 `ctx.compaction` 及自动监听器，不持有定时器、观察器或后台任务。
 
-## 开发
+当前版本是开发候选，没有正式发布标签。仓库中的评测报告是带日期的证据快照，不是对当前部署
+或任意真实项目的性能保证。
 
-要求 Node.js `^22.19.0 || >=24.0.0` 和 pnpm 11。
+## 环境要求
 
-```sh
-pnpm install
-pnpm run check
+- Node.js `^22.19.0` 或 `>=24.0.0`。
+- Corepack 和 pnpm `11.7.0`。
+- 与 `package.json` 中 `peerDependencies` 匹配的 DSH `agent`、`compaction`、`llm`、`session` 和 `token-meter` 公开包；当前范围覆盖 `0.1.1-rc.2` 与 `0.1.2-alpha.1` 系列接口。
+- 可用的摘要模型配置；确定性工具裁剪不调用模型，但达到硬压缩阈值时仍由 DSH 摘要 Provider 处理。
+
+## 安装
+
+从固定源码 commit 构建 tarball：
+
+```powershell
+corepack pnpm install --frozen-lockfile
+corepack pnpm run check
+corepack pnpm pack
+$tarball = (Resolve-Path .\improved-compact-0.1.0.tgz).Path
+dsh plugin --profile compact-dev add $tarball
+dsh --profile compact-dev --dump-config
 ```
 
-构建产物位于 `lib/`。
+示例假定已经创建用于验证的 `compact-dev` profile。不要在未检查最终组合和回滚点时直接替换生产
+profile 的基础压缩 Provider。
+
+包内 patch 会禁用基础 `compaction-basic` 和 `tool-result-pruner`，插入 `improved-compact`，并把
+`spill-policy.maxInlineBytes` 改为 `8192`。安装前必须检查目标 profile 的现有 compaction 和 spill
+覆盖，避免同时加载两个 `ctx.compaction` Provider。
+
+## 开发与评测
 
 基线与候选评测见 [`evals/README.md`](evals/README.md)。它们针对同一固定 DSH checkout、数据集和评分器，量化关键信息召回、后续结构化查询、工具配对、连续压缩漂移、token 节省和稳定性：
 
 ```sh
-pnpm run eval:baseline:native -- --dsh-root /path/to/deepseek-harness --runs 5
-pnpm run eval:candidate:native -- --dsh-root /path/to/deepseek-harness --runs 5
+corepack pnpm run eval:baseline:native -- --dsh-root /path/to/deepseek-harness --runs 5
+corepack pnpm run eval:candidate:native -- --dsh-root /path/to/deepseek-harness --runs 5
 ```
 
 使用 DSH 已配置的真实模型进行重复评测：
 
 ```sh
-pnpm run eval:baseline:model -- --provider openai --model gpt-5.6-luna --runs 5
-pnpm run eval:candidate:model -- --provider openai --model gpt-5.6-luna --runs 5
+corepack pnpm run eval:baseline:model -- --provider configured-provider --model configured-model --runs 5
+corepack pnpm run eval:candidate:model -- --provider configured-provider --model configured-model --runs 5
 ```
 
 当前基线结果见 [`evals/reports/BASELINE-2026-08-27-dsh-native-v1.md`](evals/reports/BASELINE-2026-08-27-dsh-native-v1.md) 和 [`evals/reports/BASELINE-2026-08-27-gpt-5.6-luna-v1.md`](evals/reports/BASELINE-2026-08-27-gpt-5.6-luna-v1.md)，候选对照与限制见 [`evals/reports/EXPERIMENT-2026-08-27-improved-compact-v1.md`](evals/reports/EXPERIMENT-2026-08-27-improved-compact-v1.md)。
@@ -68,16 +89,7 @@ pnpm run eval:candidate:model -- --provider openai --model gpt-5.6-luna --runs 5
 
 `requestBudget` 的比例使用当前 session log、标准 token meter 与最新 `request/context` 计算。比例包含请求的输出预留，因此比只看历史消息更早暴露“输入还能放下，但没有响应空间”的情况。默认告警不改变请求；只有显式设置 `blockAtTokens`、`blockAtRatio` 或 `maxOutputTokens` 才会改变运行行为。输出上限通过 `agent/request` 写入标准 `request/header`，可由日志重建。
 
-## 安装到 DSH profile
-
-在该目录的上一级执行：
-
-```sh
-dsh plugin --profile compact-dev add ./improved-compact
-dsh --profile compact-dev --dump-config
-```
-
-源码仓库目录与安装后的插件标识均为 `improved-compact`。
+## Profile 组合
 
 配置层会按原生 package name 校验并禁用基础 Provider，插入候选 row，同时关闭会抢先丢弃中段的原生均匀 pruner：
 
@@ -118,10 +130,36 @@ dsh --profile compact-dev --dump-config
 
 需要覆盖时，在 profile 的 `cordis.patch.yml` 中重述目标 row 的完整 `config`。例如本地工具输出必须保留更多内联内容时，可在插件补丁之后覆盖 `spill-policy.maxInlineBytes`；设得更高会增加每次后续请求的上下文成本。`modelPolicies` 可为不同 provider/model 设置不同硬阈值和保留预算；`softPruneRatio` 必须低于其中每个已解析硬阈值。
 
-卸载：
+## 验证
 
-```sh
+开发检查和策略评测分开运行：
+
+```powershell
+$dshRoot = 'C:\path\to\deepseek-harness'
+corepack pnpm run check
+corepack pnpm run eval:spill -- --dsh-root $dshRoot
+corepack pnpm run eval:baseline:native -- --dsh-root $dshRoot --runs 5
+corepack pnpm run eval:candidate:native -- --dsh-root $dshRoot --runs 5
+```
+
+`pnpm run check` 覆盖类型、普通测试、真实 Loader 组合和构建。`eval:spill` 验证 DSH 的真实 spill
+服务和定位符；native 对照使用合成开发集。真实模型、未见 holdout、真实项目任务成功率、安全红队
+和生产 canary 都不在 `check` 的证明范围内。
+
+部署时还应检查：最终配置中只有一个 compaction Provider；手动 `/compact` 可完成；大工具结果生成
+spill 定位符且可按需读取；卸载后基础 Provider 恢复。
+
+## 数据、停用与回滚
+
+插件没有私有数据库。摘要和裁剪结果使用 DSH 标准 session event，完整的大型 spill 内容由 DSH
+的 session-scoped spill store 保存。因此备份、保留和删除都遵循 DSH session 与 spill 配置；只移除
+插件不会删除历史 session 数据。
+
+停止使用该 profile 的 DSH 进程后卸载：
+
+```powershell
 dsh plugin --profile compact-dev remove improved-compact
+dsh --profile compact-dev --dump-config
 ```
 
 移除 `improved-compact` 后，其 patch 不再参与组合，基础 profile 的 `@deepseek-ai/dsh-compaction-basic` 和 `@deepseek-ai/dsh-compaction-tool-result-pruner` 会恢复；已有 session log 无需迁移，因为候选只写上游标准事件。上线时仍建议先使用影子或小比例 canary，并保留移除插件作为回滚点。
@@ -144,3 +182,7 @@ evals/             共享数据集、评分器、基线/候选运行器与报告
 cordis.patch.yml   安装到 profile 时应用的配置层
 tsdown.config.ts   ESM 与类型声明构建
 ```
+
+## 许可证
+
+MIT，见 [LICENSE](LICENSE)。
