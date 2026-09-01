@@ -69,7 +69,7 @@ describe('improved-compact real Loader composition', () => {
       ['@deepseek-ai/dsh-session', SessionStore],
       ['@deepseek-ai/dsh-token-meter', TokenMeter],
       ['@deepseek-ai/dsh-spill-policy', spillPolicyProbe],
-      ['improved-compact', plugin],
+      ['@muou000/improved-compact', plugin],
     ])
     context.loader.internal = {
       version: 'v2',
@@ -89,7 +89,7 @@ describe('improved-compact real Loader composition', () => {
     expect(context.get('toolResultPruner')).toBeUndefined()
     const entries = [...context.loader.entries()]
     expect(entries.find(entry => entry.options.id === 'compaction-basic')?.disabled).toBe(true)
-    expect(entries.find(entry => entry.options.id === 'improved-compact')?.options.name).toBe('improved-compact')
+    expect(entries.find(entry => entry.options.id === 'improved-compact')?.options.name).toBe('@muou000/improved-compact')
     expect(entries.find(entry => entry.options.id === 'tool-result-pruner')?.disabled).toBe(true)
     expect(entries.find(entry => entry.options.id === 'spill-policy')?.options.config)
       .toEqual({ maxInlineBytes: 8192 })

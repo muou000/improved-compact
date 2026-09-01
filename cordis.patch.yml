@@ -6,7 +6,7 @@
 
 - insert:
     - id: improved-compact
-      name: improved-compact
+      name: '@muou000/improved-compact'
       config:
         softPruneRatio: 0.6
         thresholdRatio: 0.8

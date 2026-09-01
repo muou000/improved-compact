@@ -1,7 +1,15 @@
 {
-  "name": "improved-compact",
+  "name": "@muou000/improved-compact",
   "version": "0.1.0",
   "description": "Adaptive replay-safe context compaction provider for DeepSeek Harness",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/muou000/improved-compact.git"
+  },
+  "homepage": "https://github.com/muou000/improved-compact#readme",
+  "bugs": {
+    "url": "https://github.com/muou000/improved-compact/issues"
+  },
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -40,6 +48,9 @@
     "node": "^22.19.0 || >=24.0.0"
   },
   "packageManager": "pnpm@11.7.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",

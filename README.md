@@ -27,13 +27,19 @@
 
 ## 安装
 
+npm 发布名为 `@muou000/improved-compact`，可直接从 registry 安装：
+
+```powershell
+dsh plugin --profile compact-dev add '@muou000/improved-compact@latest'
+```
+
 从固定源码 commit 构建 tarball：
 
 ```powershell
 corepack pnpm install --frozen-lockfile
 corepack pnpm run check
 corepack pnpm pack
-$tarball = (Resolve-Path .\improved-compact-0.1.0.tgz).Path
+$tarball = (Resolve-Path .\muou000-improved-compact-0.1.0.tgz).Path
 dsh plugin --profile compact-dev add $tarball
 dsh --profile compact-dev --dump-config
 ```
@@ -100,7 +106,7 @@ corepack pnpm run eval:candidate:model -- --provider configured-provider --model
 
 - insert:
     - id: improved-compact
-      name: improved-compact
+      name: '@muou000/improved-compact'
       config:
         softPruneRatio: 0.6
         thresholdRatio: 0.8
@@ -158,7 +164,7 @@ spill 定位符且可按需读取；卸载后基础 Provider 恢复。
 停止使用该 profile 的 DSH 进程后卸载：
 
 ```powershell
-dsh plugin --profile compact-dev remove improved-compact
+dsh plugin --profile compact-dev remove '@muou000/improved-compact'
 dsh --profile compact-dev --dump-config
 ```
 
